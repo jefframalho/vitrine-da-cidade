@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel · Vitrine da Cidade</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0E6E66">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+<header class="adm-topo">
+  <div class="wrap">
+    <a class="marca" href="./"><i>V</i>Painel da Vitrine</a>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span id="quem" class="mono" style="font-size:13px;opacity:.85"></span>
+      <a class="btn btn-ghost btn-sm" href="./" target="_blank" rel="noopener">Ver site</a>
+      <button id="sair" class="btn btn-ghost btn-sm" hidden>Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap adm-main">
+  <div id="aviso" class="aviso" hidden></div>
+
+  <section id="tela-login" class="cartao login" hidden>
+    <h1>Entrar</h1>
+    <p class="dica" style="margin-bottom:16px">Use o e-mail e a senha que você criou no Firebase Authentication.</p>
+    <form id="form-login" novalidate>
+      <label>E-mail<input id="l-email" type="email" autocomplete="username" required></label>
+      <label>Senha<input id="l-senha" type="password" autocomplete="current-password" required></label>
+      <div id="l-status" class="status" role="status"></div>
+      <button class="btn btn-amber" type="submit">Entrar</button>
+      <button class="btn" type="button" id="esqueci">Esqueci a senha</button>
+    </form>
+  </section>
+
+  <section id="tela-lista" hidden>
+    <div class="adm-cab">
+      <h2>Lojas cadastradas</h2>
+      <button id="nova" class="btn btn-amber">+ Nova loja</button>
+    </div>
+    <p class="conta" id="conta" style="margin:10px 0"></p>
+    <div id="linhas" class="linhas"></div>
+  </section>
+
+  <section id="tela-form" class="cartao" hidden></section>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
