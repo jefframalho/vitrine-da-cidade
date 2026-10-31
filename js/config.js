@@ -6,12 +6,12 @@
 // =====================================================================
 
 export const firebaseConfig = {
-  apiKey: "COLE_AQUI",
-  authDomain: "COLE_AQUI",
-  projectId: "COLE_AQUI",
-  storageBucket: "COLE_AQUI",
-  messagingSenderId: "COLE_AQUI",
-  appId: "COLE_AQUI"
+  apiKey: "AIzaSyALRSFzMwpC1782LtBIIMgqVYDBcjLw3pk",
+  authDomain: "vitrine-da-cidade-ee9d6.firebaseapp.com",
+  projectId: "vitrine-da-cidade-ee9d6",
+  storageBucket: "vitrine-da-cidade-ee9d6.firebasestorage.app",
+  messagingSenderId: "798952060336",
+  appId: "1:798952060336:web:0a21f6dcde94ecbf031275"
 };
 
 export const SITE = {
