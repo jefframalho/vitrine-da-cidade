@@ -1,6 +1,6 @@
 // Vitrine pública: busca por CEP, lista de lojas da cidade e gaveta da loja
 import { configurado, SITE, CATS, DIAS, $, esc, digitos, fmtCep, semAcento, chaveCidade, iniciais, brl, zap, fmtTel, insta, aberto, toast,
-  consultarCep, carregarLojas, preencherMidias, abrirPdf } from "./comum.js?v=4";
+  consultarCep, carregarLojas, preencherMidias, abrirPdf } from "./comum.js?v=5";
 
 window.__ok = true;
 const S = { lojas: [], carregou: false, cidade: null, cep: "", msg: "", buscando: false, cat: "Todas", q: "", aberta: null };
@@ -103,6 +103,16 @@ function cardHTML(l) {
 function listaCidades(cs) {
   return `<div class="cidades">${cs.map(x => `<button class="cid" data-cidade="${esc(x.key)}"><b>${esc(x.nome)} – ${esc(x.uf)}</b><span>${x.n} ${x.n === 1 ? "loja" : "lojas"}</span></button>`).join("")}</div>`;
 }
+// Agrupa as lojas por categoria, na ordem da lista CATS
+function porCategoria(lista) {
+  const grupos = new Map();
+  for (const l of lista) { const c = CATS.includes(l.categoria) ? l.categoria : "Outros"; (grupos.get(c) || grupos.set(c, []).get(c)).push(l); }
+  return CATS.filter(c => grupos.has(c)).map(c => {
+    const g = grupos.get(c);
+    return `<section class="grupo"><div class="grupo-cab"><h2 class="secao-tit">${esc(c)}</h2><span class="conta">${g.length} ${g.length === 1 ? "loja" : "lojas"}</span>${g.length > 1 ? `<button class="btn btn-sm" data-ver-cat="${esc(c)}">Ver só ${esc(c)}</button>` : ""}</div>
+      <div class="grade">${g.map(cardHTML).join("")}</div></section>`;
+  }).join("");
+}
 function renderConteudo() {
   const c = $("#conteudo");
   $("#fixa").hidden = !S.cidade || !lojasDaCidade().length;
@@ -124,8 +134,9 @@ function renderConteudo() {
   renderCats(base);
   const lista = filtradas(base);
   $("#conta").textContent = `${lista.length} ${lista.length === 1 ? "loja" : "lojas"}${S.cat !== "Todas" ? " em " + S.cat : ""}`;
-  c.innerHTML = lista.length ? `<div class="grade">${lista.map(cardHTML).join("")}</div>`
-    : `<div class="vazio"><h2>Nada encontrado</h2><p>Tente outra palavra ou escolha "Todas".</p></div>`;
+  c.innerHTML = !lista.length ? `<div class="vazio"><h2>Nada encontrado</h2><p>Tente outra palavra ou escolha "Todas".</p></div>`
+    : S.cat === "Todas" ? porCategoria(lista)
+    : `<div class="grade">${lista.map(cardHTML).join("")}</div>`;
   preencherMidias(c);
 }
 function renderTudo() { renderTopo(); renderConteudo(); }
@@ -190,7 +201,8 @@ $("#q").addEventListener("input", e => { S.q = e.target.value; renderConteudo();
 $("#cats").addEventListener("click", e => { const b = e.target.closest("[data-cat]"); if (b) { S.cat = b.dataset.cat; renderConteudo(); } });
 $("#conteudo").addEventListener("click", e => {
   const c = e.target.closest("[data-loja]"); if (c) return mostrarLoja(c.dataset.loja);
-  const cid = e.target.closest("[data-cidade]"); if (cid) escolherCidade(cid.dataset.cidade);
+  const cid = e.target.closest("[data-cidade]"); if (cid) return escolherCidade(cid.dataset.cidade);
+  const vc = e.target.closest("[data-ver-cat]"); if (vc) { S.cat = vc.dataset.verCat; renderConteudo(); scrollTo({ top: $("#fixa").offsetTop }); }
 });
 $("#overlay").addEventListener("click", async e => {
   if (e.target.id === "overlay") return fecharPainel();

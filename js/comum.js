@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig, SITE } from "./config.js?v=4";
+import { firebaseConfig, SITE } from "./config.js?v=5";
 
 export { SITE };
 export const configurado = !String(firebaseConfig.apiKey || "").includes("COLE_AQUI");

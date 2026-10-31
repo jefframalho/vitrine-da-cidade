@@ -184,3 +184,10 @@ textarea{min-height:80px;resize:vertical}
 .status.erro{color:var(--off)}
 .rodape-form{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;position:sticky;bottom:0;background:var(--surface);padding-block:12px;border-top:1px solid var(--line)}
 .dica{font-size:13px;color:var(--muted);margin:0}
+
+/* Lojas agrupadas por categoria */
+.grupo .grade{padding-block:6px 18px}
+.grupo-cab{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:14px}
+.grupo-cab .secao-tit{margin:0}
+.grupo-cab .btn{margin-left:auto}
+.grupo:last-child .grade{padding-bottom:44px}

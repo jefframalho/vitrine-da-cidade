@@ -2,7 +2,7 @@
 import { collection, doc, addDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { configurado, db, auth, CATS, DIAS, UFS, $, esc, digitos, fmtCep, chaveCidade, iniciais, toast,
-  consultarCep, carregarLojas, preencherMidias } from "./comum.js?v=4";
+  consultarCep, carregarLojas, preencherMidias } from "./comum.js?v=5";
 
 let lojas = [];
 let F = null; // formulário aberto: { id, d, novas:[], removidas:[] }
@@ -52,9 +52,12 @@ async function carregarLista() {
   renderLista(); telas("tela-lista");
 }
 function renderLista() {
-  lojas.sort((a, b) => String(a.cidade).localeCompare(b.cidade, "pt-BR") || String(a.nome).localeCompare(b.nome, "pt-BR"));
+  const ordem = c => { const i = CATS.indexOf(c); return i < 0 ? CATS.length : i; };
+  lojas.sort((a, b) => ordem(a.categoria) - ordem(b.categoria) || String(a.nome).localeCompare(b.nome, "pt-BR"));
   $("#conta").textContent = `${lojas.length} ${lojas.length === 1 ? "loja" : "lojas"}`;
+  let catAtual = null;
   $("#linhas").innerHTML = lojas.length ? lojas.map(l => `
+    ${l.categoria !== catAtual ? (catAtual = l.categoria, `<h3 class="secao-tit" style="margin:14px 0 2px">${esc(l.categoria || "Sem categoria")} <span class="conta">· ${lojas.filter(x => x.categoria === l.categoria).length}</span></h3>`) : ""}
     <div class="linha">
       <div class="logo"><span>${esc(iniciais(l.nome))}</span>${l.logo ? `<img data-midia="${esc(l.logo)}" alt="">` : ""}</div>
       <div class="info"><b>${esc(l.nome)}</b><small>${esc(l.categoria || "")} · ${esc(l.cidade || "sem cidade")} – ${esc(l.uf || "")}${l.destaque ? " · destaque" : ""}</small></div>
