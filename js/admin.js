@@ -23,8 +23,13 @@ if (!configurado) {
 const erroAuth = c => ({
   "auth/invalid-credential": "E-mail ou senha incorretos.", "auth/wrong-password": "E-mail ou senha incorretos.",
   "auth/user-not-found": "E-mail ou senha incorretos.", "auth/invalid-email": "E-mail inválido.",
-  "auth/too-many-requests": "Muitas tentativas. Espere alguns minutos.", "auth/network-request-failed": "Sem conexão com a internet."
-})[c] || "Não foi possível entrar. Tente de novo.";
+  "auth/too-many-requests": "Muitas tentativas. Espere alguns minutos.", "auth/network-request-failed": "Sem conexão com a internet.",
+  "auth/operation-not-allowed": "O login por e-mail/senha não está ativado. No Firebase: Authentication > Método de login > E-mail/senha > Ativar.",
+  "auth/configuration-not-found": "O Authentication não foi iniciado. No Firebase: Authentication > Vamos começar, e ative E-mail/senha.",
+  "auth/unauthorized-domain": "Domínio não autorizado. No Firebase: Authentication > Configurações > Domínios autorizados > adicionar jefframalho.github.io.",
+  "auth/user-disabled": "Este usuário está desativado no Firebase.",
+  "auth/missing-password": "Digite a senha."
+})[c] || `Não foi possível entrar (código: ${c || "desconhecido"}).`;
 $("#form-login").addEventListener("submit", async e => {
   e.preventDefault();
   const s = $("#l-status"); s.className = "status"; s.textContent = "Entrando…";
