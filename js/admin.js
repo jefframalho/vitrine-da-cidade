@@ -2,7 +2,7 @@
 import { collection, doc, addDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { configurado, db, auth, CATS, DIAS, UFS, $, esc, digitos, fmtCep, chaveCidade, iniciais, toast,
-  consultarCep, carregarLojas, preencherMidias } from "./comum.js";
+  consultarCep, carregarLojas, preencherMidias } from "./comum.js?v=4";
 
 let lojas = [];
 let F = null; // formulário aberto: { id, d, novas:[], removidas:[] }

@@ -1,6 +1,6 @@
 // Vitrine pública: busca por CEP, lista de lojas da cidade e gaveta da loja
 import { configurado, SITE, CATS, DIAS, $, esc, digitos, fmtCep, semAcento, chaveCidade, iniciais, brl, zap, fmtTel, insta, aberto, toast,
-  consultarCep, carregarLojas, preencherMidias, abrirPdf } from "./comum.js";
+  consultarCep, carregarLojas, preencherMidias, abrirPdf } from "./comum.js?v=4";
 
 window.__ok = true;
 const S = { lojas: [], carregou: false, cidade: null, cep: "", msg: "", buscando: false, cat: "Todas", q: "", aberta: null };
