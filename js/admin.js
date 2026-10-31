@@ -1,8 +1,8 @@
 // Painel administrativo: login, lista de lojas, cadastro e edição
 import { collection, doc, addDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { configurado, db, auth, CATS, DIAS, UFS, $, esc, digitos, fmtCep, chaveCidade, iniciais, toast,
-  consultarCep, carregarLojas, preencherMidias } from "./comum.js?v=5";
+import { configurado, db, auth, SITE, PLANOS, CATS, DIAS, UFS, $, esc, digitos, fmtCep, chaveCidade, iniciais, toast, brl, zap,
+  consultarCep, carregarLojas, preencherMidias, planoPorId, planoAtivo, diasAte, fmtData, hojeISO } from "./comum.js?v=6";
 
 let lojas = [];
 let F = null; // formulário aberto: { id, d, novas:[], removidas:[] }
@@ -51,7 +51,39 @@ async function carregarLista() {
   try { lojas = await carregarLojas(); } catch (e) { aviso("Não foi possível carregar as lojas. Confira as regras do Firestore (README, passo 3)."); lojas = []; }
   renderLista(); telas("tela-lista");
 }
+function statusPlano(l) {
+  const p = planoPorId(l.plano);
+  if (!p.preco) return { txt: p.nome, cls: "" };
+  const d = diasAte(l.planoAte);
+  if (d == null) return { txt: `${p.nome} · sem validade`, cls: "venc" };
+  if (d < 0) return { txt: `${p.nome} · venceu há ${-d} ${-d === 1 ? "dia" : "dias"}`, cls: "venc" };
+  if (d <= 7) return { txt: `${p.nome} · vence ${d === 0 ? "hoje" : d === 1 ? "amanhã" : `em ${d} dias`}`, cls: "alerta" };
+  return { txt: `${p.nome} · até ${fmtData(l.planoAte)}`, cls: "ok" };
+}
+function linkCobranca(l) {
+  const p = planoPorId(l.plano), d = diasAte(l.planoAte);
+  const quando = d == null ? "" : d < 0 ? `venceu em ${fmtData(l.planoAte)}` : d === 0 ? "vence hoje" : `vence em ${fmtData(l.planoAte)}`;
+  const texto = `Olá! Aqui é da ${SITE.nome}. O plano ${p.nome} da ${l.nome} ${quando}. ` +
+    `Para continuar aparecendo em destaque, a renovação é ${brl(p.preco)} por mês.` + (SITE.pix ? ` Pix: ${SITE.pix}` : "") + " Obrigado!";
+  return `https://wa.me/${zap(l.whatsapp)}?text=${encodeURIComponent(texto)}`;
+}
+function renderResumo() {
+  const ativos = lojas.filter(l => planoAtivo(l).preco > 0);
+  const receita = ativos.reduce((s, l) => s + planoAtivo(l).preco, 0);
+  const cobrar = lojas.filter(l => planoPorId(l.plano).preco > 0 && (diasAte(l.planoAte) ?? -1) <= 7)
+    .sort((a, b) => (diasAte(a.planoAte) ?? -999) - (diasAte(b.planoAte) ?? -999));
+  const porPlano = PLANOS.map(p => `${lojas.filter(l => planoAtivo(l).id === p.id).length} ${p.nome}`).join(" · ");
+  $("#resumo").innerHTML = `
+    <div class="resumo-num"><span>Receita mensal dos planos ativos</span><b class="mono">${brl(receita)}</b><small>${ativos.length} ${ativos.length === 1 ? "loja pagante" : "lojas pagantes"} · ${porPlano}</small></div>
+    <div class="resumo-cobrar"><span>Para cobrar (vencidos ou vencendo em 7 dias)</span>
+      ${cobrar.length ? cobrar.map(l => { const st = statusPlano(l); return `<div class="cobrar-linha"><div style="min-width:0"><b>${esc(l.nome)}</b><small class="${st.cls}">${esc(st.txt)}</small></div>
+        ${zap(l.whatsapp) ? `<a class="btn btn-sm btn-brand" target="_blank" rel="noopener" href="${linkCobranca(l)}">Cobrar</a>` : `<small>sem WhatsApp</small>`}
+        <button class="btn btn-sm" data-renovar="${esc(l.id)}">+30 dias</button></div>`; }).join("")
+        : `<small>Nenhuma cobrança pendente.</small>`}
+    </div>`;
+}
 function renderLista() {
+  renderResumo();
   const ordem = c => { const i = CATS.indexOf(c); return i < 0 ? CATS.length : i; };
   lojas.sort((a, b) => ordem(a.categoria) - ordem(b.categoria) || String(a.nome).localeCompare(b.nome, "pt-BR"));
   $("#conta").textContent = `${lojas.length} ${lojas.length === 1 ? "loja" : "lojas"}`;
@@ -60,7 +92,7 @@ function renderLista() {
     ${l.categoria !== catAtual ? (catAtual = l.categoria, `<h3 class="secao-tit" style="margin:14px 0 2px">${esc(l.categoria || "Sem categoria")} <span class="conta">· ${lojas.filter(x => x.categoria === l.categoria).length}</span></h3>`) : ""}
     <div class="linha">
       <div class="logo"><span>${esc(iniciais(l.nome))}</span>${l.logo ? `<img data-midia="${esc(l.logo)}" alt="">` : ""}</div>
-      <div class="info"><b>${esc(l.nome)}</b><small>${esc(l.categoria || "")} · ${esc(l.cidade || "sem cidade")} – ${esc(l.uf || "")}${l.destaque ? " · destaque" : ""}</small></div>
+      <div class="info"><b>${esc(l.nome)}</b><small>${esc(l.categoria || "")} · ${esc(l.cidade || "sem cidade")} – ${esc(l.uf || "")}</small><span class="plano-chip ${statusPlano(l).cls}">${esc(statusPlano(l).txt)}</span></div>
       <a class="btn btn-sm" href="./#loja-${esc(l.id)}" target="_blank" rel="noopener">Ver</a>
       <button class="btn btn-sm btn-brand" data-editar="${esc(l.id)}">Editar</button>
     </div>`).join("")
@@ -68,12 +100,29 @@ function renderLista() {
   preencherMidias($("#linhas"));
 }
 $("#linhas").addEventListener("click", e => { const b = e.target.closest("[data-editar]"); if (b) abrirForm(b.dataset.editar); });
+// Renova por 30 dias a partir do vencimento (ou de hoje, se já venceu)
+function maisDias(iso, n) {
+  const base = iso && diasAte(iso) >= 0 ? new Date(...iso.split("-").map((x, i) => i === 1 ? x - 1 : +x)) : new Date();
+  base.setDate(base.getDate() + n); return hojeISO(base);
+}
+const mais30 = iso => maisDias(iso, 30);
+$("#resumo").addEventListener("click", async e => {
+  const b = e.target.closest("[data-renovar]"); if (!b) return;
+  const l = lojas.find(x => x.id === b.dataset.renovar); if (!l) return;
+  b.disabled = true;
+  try {
+    const { id, ...dados } = l;
+    const novo = mais30(l.planoAte);
+    await setDoc(doc(db, "lojas", id), { ...dados, planoAte: novo });
+    l.planoAte = novo; toast(`${l.nome}: renovado até ${fmtData(novo)}`); renderLista();
+  } catch (err) { b.disabled = false; toast("Não foi possível renovar. Tente de novo."); }
+});
 $("#nova").addEventListener("click", () => abrirForm());
 
 // ---------- Formulário ----------
 function lojaVazia() {
   return { nome: "", categoria: CATS[0], descricao: "", whatsapp: "", instagram: "", cep: "", endereco: "", bairro: "", cidade: "", uf: "",
-    horario: { abre: "07:30", fecha: "18:00", dias: [1, 2, 3, 4, 5, 6] }, produtos: [], catalogo: [], catalogoLink: "", logo: "", destaque: false };
+    horario: { abre: "07:30", fecha: "18:00", dias: [1, 2, 3, 4, 5, 6] }, produtos: [], catalogo: [], catalogoLink: "", logo: "", plano: PLANOS[0].id, planoAte: "" };
 }
 function abrirForm(id) {
   const base = id ? lojas.find(l => l.id === id) : null;
@@ -112,7 +161,14 @@ function renderForm() {
         <label>Fecha às<input id="f-fecha" type="time" value="${esc(h.fecha || "")}"></label>
       </div>
       <div class="dias" role="group" aria-label="Dias abertos">${DIAS.map((n, i) => `<label><input type="checkbox" id="f-dia-${i}" ${(h.dias || []).includes(i) ? "checked" : ""}>${n}</label>`).join("")}</div>
-      <label style="display:flex;align-items:center;gap:8px;font-weight:500"><input type="checkbox" id="f-dest" ${d.destaque ? "checked" : ""}> Mostrar em destaque (primeiro da cidade)</label>
+      <div class="bloco"><h3>Plano</h3>
+        <div class="duas">
+          <label>Plano<select id="f-plano">${PLANOS.map(p => `<option value="${esc(p.id)}" ${p.id === (d.plano || PLANOS[0].id) ? "selected" : ""}>${esc(p.nome)}${p.preco ? " · " + brl(p.preco) + "/mês" : " · grátis"}</option>`).join("")}</select></label>
+          <label>Pago até <small id="plano-status"></small><input id="f-ate" type="date" value="${esc(d.planoAte || "")}"></label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-sm" data-acao="mais30">+30 dias</button><button type="button" class="btn btn-sm" data-acao="mais365">+1 ano</button></div>
+        <p class="dica" id="plano-dica"></p>
+      </div>
 
       <div class="bloco"><h3>Catálogo online</h3>
         <p class="dica">Envie fotos das páginas ou um PDF de até 700 KB. Para PDF maior, cole um link (Google Drive, por exemplo).</p>
@@ -139,13 +195,14 @@ function renderForm() {
       </div>
     </form>`;
   preencherMidias($("#tela-form"));
+  dicaPlano();
 }
 function lerForm() {
   const d = F.d, v = id => ($("#" + id)?.value ?? "").trim();
   Object.assign(d, {
     nome: v("f-nome"), categoria: v("f-cat"), whatsapp: v("f-zap"), instagram: v("f-ig"), descricao: v("f-desc"),
     cep: digitos(v("f-cep")), cidade: v("f-cidade").replace(/\s+/g, " "), uf: v("f-uf"), endereco: v("f-end"), bairro: v("f-bairro"),
-    catalogoLink: v("f-link"), destaque: !!$("#f-dest")?.checked,
+    catalogoLink: v("f-link"), plano: v("f-plano") || PLANOS[0].id, planoAte: v("f-ate"),
     horario: { abre: v("f-abre"), fecha: v("f-fecha"), dias: DIAS.map((_, i) => $("#f-dia-" + i)?.checked ? i : -1).filter(i => i >= 0) }
   });
   d.produtos = (d.produtos || []).map((p, i) => {
@@ -153,6 +210,23 @@ function lerForm() {
     return { ...p, nome: ($("#p-nome-" + i)?.value || "").trim(), preco: pr === "" || isNaN(+pr) ? "" : +pr };
   });
 }
+// Explica o que o plano escolhido libera e avisa se algo ficará de fora
+function dicaPlano() {
+  const sel = $("#f-plano"); if (!sel) return;
+  const p = planoPorId(sel.value), ate = $("#f-ate").value, st = $("#plano-status"), dica = $("#plano-dica");
+  const nProd = (F.d.produtos || []).length, temCat = (F.d.catalogo || []).length || ($("#f-link")?.value || "").trim();
+  const avisos = [];
+  if (p.preco) {
+    const d = diasAte(ate);
+    st.textContent = !ate ? "· informe a data" : d < 0 ? "· vencido" : `· ${d} ${d === 1 ? "dia" : "dias"} restantes`;
+    if (!ate || d < 0) avisos.push(`Sem data válida, a loja aparece como ${PLANOS[0].nome}.`);
+  } else st.textContent = "";
+  const ativo = p.preco && ate && diasAte(ate) >= 0 ? p : PLANOS[0];
+  if (nProd > ativo.maxProdutos) avisos.push(`No plano ${ativo.nome}, só os ${ativo.maxProdutos} primeiros produtos aparecem no site.`);
+  if (temCat && !ativo.catalogo) avisos.push(`O catálogo não aparece no plano ${ativo.nome}.`);
+  dica.textContent = avisos.length ? avisos.join(" ") : `Plano ${ativo.nome}: até ${ativo.maxProdutos} produtos${ativo.catalogo ? ", catálogo online" : ""}${ativo.destaque ? ", destaque" : ""}${ativo.pagina ? ", página própria" : ""}.`;
+}
+$("#tela-form").addEventListener("change", e => { if (["f-plano", "f-ate"].includes(e.target.id)) dicaPlano(); });
 const status = (t, erro) => { const e = $("#f-status"); if (e) { e.textContent = t; e.className = "status" + (erro ? " erro" : ""); } };
 
 // Preenche cidade/UF/endereço pelo CEP
@@ -263,6 +337,11 @@ $("#tela-form").addEventListener("click", e => {
   const a = t.dataset.acao;
   if (a === "cancelar") cancelar();
   else if (a === "excluir") excluir(t);
+  else if (a === "mais30" || a === "mais365") {
+    const sel = $("#f-plano");
+    if (!planoPorId(sel.value).preco) { const pago = PLANOS.find(p => p.preco); if (pago) sel.value = pago.id; }
+    $("#f-ate").value = maisDias($("#f-ate").value, a === "mais30" ? 30 : 365); dicaPlano();
+  }
   else if (a === "add-prod") { lerForm(); F.d.produtos.push({ nome: "", preco: "", foto: "" }); renderForm(); setTimeout(() => $("#p-nome-" + (F.d.produtos.length - 1))?.focus(), 0); }
   else if (t.dataset.up) enviar(t.dataset.up, +t.dataset.i);
   else if (t.dataset.rmCat != null) { lerForm(); const [c] = F.d.catalogo.splice(+t.dataset.rmCat, 1); if (c) F.removidas.push(c.id); renderForm(); }

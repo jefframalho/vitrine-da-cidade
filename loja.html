@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loja · Vitrine da Cidade</title>
+<meta name="theme-color" content="#0E6E66">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="css/estilo.css?v=6">
+</head>
+<body class="pagina-loja">
+<main class="pagina-wrap">
+  <div id="aviso" class="aviso wrap" hidden></div>
+  <p id="carregando" class="conta wrap" style="padding-top:30px">Carregando loja…</p>
+  <article id="loja" class="pagina-ficha" hidden></article>
+  <p class="rodape wrap" style="padding-top:20px"><a href="./">Ver mais lojas na Vitrine da Cidade</a></p>
+</main>
+<div id="toast" class="toast" hidden></div>
+<script>
+(function(){
+  function mostrar(t){var a=document.getElementById('aviso');if(a){a.hidden=false;a.textContent=t;}var c=document.getElementById('carregando');if(c)c.hidden=true;}
+  window.addEventListener('error',function(e){if(window.__ok)return;var t=e.target;var arq=(t&&t.src)||e.filename||'';mostrar('Erro ao carregar: '+(e.message||'um arquivo não carregou')+(arq?' ('+arq.split('/').pop()+')':''));},true);
+  setTimeout(function(){if(!window.__ok)mostrar('A página não iniciou. Recarregue a página.');},9000);
+})();
+</script>
+<script type="module" src="js/loja.js?v=6"></script>
+</body>
+</html>

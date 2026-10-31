@@ -2,9 +2,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig, SITE } from "./config.js?v=5";
+import { firebaseConfig, SITE, PLANOS } from "./config.js?v=6";
 
-export { SITE };
+export { SITE, PLANOS };
 export const configurado = !String(firebaseConfig.apiKey || "").includes("COLE_AQUI");
 export const app = configurado ? initializeApp(firebaseConfig) : null;
 export const db = configurado ? getFirestore(app) : null;
@@ -104,3 +104,25 @@ export async function abrirPdf(id) {
     if (janela) janela.location.href = url; else location.href = url;
   } catch (e) { if (janela) janela.close(); toast("Não foi possível abrir o catálogo."); }
 }
+
+// ---------- Planos ----------
+export function hojeISO(d = new Date()) {
+  const z = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+}
+export function diasAte(iso) {
+  if (!iso) return null;
+  const [a, m, d] = iso.split("-").map(Number); const alvo = new Date(a, m - 1, d);
+  const h = new Date(); h.setHours(0, 0, 0, 0);
+  return Math.round((alvo - h) / 86400000);
+}
+export const fmtData = iso => iso ? iso.split("-").reverse().join("/") : "";
+export const planoPorId = id => PLANOS.find(p => p.id === id) || PLANOS[0];
+/** Plano que vale hoje: o pago, se estiver dentro da validade; senão, o primeiro (grátis). */
+export function planoAtivo(l) {
+  const p = planoPorId(l.plano);
+  if (p === PLANOS[0] || !p.preco) return p;
+  const dias = diasAte(l.planoAte);
+  return dias != null && dias >= 0 ? p : PLANOS[0];
+}
+export const rankPlano = l => PLANOS.indexOf(planoAtivo(l)); // maior = plano mais alto

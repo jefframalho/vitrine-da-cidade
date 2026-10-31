@@ -1,6 +1,7 @@
 // Vitrine pública: busca por CEP, lista de lojas da cidade e gaveta da loja
-import { configurado, SITE, CATS, DIAS, $, esc, digitos, fmtCep, semAcento, chaveCidade, iniciais, brl, zap, fmtTel, insta, aberto, toast,
-  consultarCep, carregarLojas, preencherMidias, abrirPdf } from "./comum.js?v=5";
+import { configurado, SITE, CATS, $, esc, digitos, fmtCep, semAcento, chaveCidade, brl, zap, fmtTel, insta, toast,
+  consultarCep, carregarLojas, preencherMidias, abrirPdf, rankPlano } from "./comum.js?v=6";
+import { detalheHTML, logoHTML, seloHora, seloPlano, conteudoPermitido } from "./detalhe.js?v=6";
 
 window.__ok = true;
 const S = { lojas: [], carregou: false, cidade: null, cep: "", msg: "", buscando: false, cat: "Todas", q: "", aberta: null };
@@ -85,19 +86,18 @@ function filtradas(base) {
     if (S.cat !== "Todas" && l.categoria !== S.cat) return false;
     if (!q) return true;
     return semAcento([l.nome, l.categoria, l.descricao, l.bairro, l.endereco, ...(l.produtos || []).map(p => p.nome)].join(" ")).includes(q);
-  }).sort((a, b) => (b.destaque ? 1 : 0) - (a.destaque ? 1 : 0) || String(a.nome).localeCompare(b.nome, "pt-BR"));
+  }).sort((a, b) => rankPlano(b) - rankPlano(a) || String(a.nome).localeCompare(b.nome, "pt-BR"));
 }
-const logoHTML = l => `<div class="logo"><span>${esc(iniciais(l.nome))}</span>${l.logo ? `<img data-midia="${esc(l.logo)}" alt="">` : ""}</div>`;
-function seloHora(l) { const ab = aberto(l); return ab === true ? `<span class="selo aberto">Aberto agora</span>` : ab === false ? `<span class="selo fechado">Fechado</span>` : ""; }
 function cardHTML(l) {
-  const precos = (l.produtos || []).map(p => p.preco).filter(p => p !== "" && p != null && !isNaN(p));
+  const { plano, produtos, catalogo, catalogoLink } = conteudoPermitido(l);
+  const precos = produtos.map(p => p.preco).filter(p => p !== "" && p != null && !isNaN(p));
   const min = precos.length ? Math.min(...precos) : null;
-  const temCat = (l.catalogo || []).length || l.catalogoLink;
-  return `<button class="card" data-loja="${esc(l.id)}">
+  const temCat = catalogo.length || catalogoLink;
+  return `<button class="card${plano.pagina ? " premium" : plano.destaque ? " destaque" : ""}" data-loja="${esc(l.id)}">
     <div class="card-topo">${logoHTML(l)}<div style="min-width:0"><div class="cat-label">${esc(l.categoria || "Outros")}${l.bairro ? " · " + esc(l.bairro) : ""}</div><h3>${esc(l.nome)}</h3></div></div>
     ${l.descricao ? `<p>${esc(l.descricao)}</p>` : ""}
-    <div class="selos">${l.destaque ? `<span class="selo dest">Destaque</span>` : ""}${seloHora(l)}${temCat ? `<span class="selo">Catálogo</span>` : ""}${l.instagram ? `<span class="selo">@${esc(insta(l.instagram))}</span>` : ""}</div>
-    <div class="card-pe">${min != null ? `<div class="apartir">a partir de<b>${brl(min)}</b></div>` : `<div class="apartir">${(l.produtos || []).length ? l.produtos.length + " produtos" : "Ver detalhes"}</div>`}<span class="btn btn-sm">Ver loja →</span></div>
+    <div class="selos">${seloPlano(l)}${seloHora(l)}${temCat ? `<span class="selo">Catálogo</span>` : ""}${l.instagram ? `<span class="selo">@${esc(insta(l.instagram))}</span>` : ""}</div>
+    <div class="card-pe">${min != null ? `<div class="apartir">a partir de<b>${brl(min)}</b></div>` : `<div class="apartir">${produtos.length ? produtos.length + " produtos" : "Ver detalhes"}</div>`}<span class="btn btn-sm">Ver loja →</span></div>
   </button>`;
 }
 function listaCidades(cs) {
@@ -155,36 +155,7 @@ function fecharPainel() {
 function mostrarLoja(id) {
   const l = S.lojas.find(x => x.id === id); if (!l) return;
   S.aberta = id;
-  const z = zap(l.whatsapp), ig = insta(l.instagram), h = l.horario || {}, cat = l.catalogo || [];
-  const msg = encodeURIComponent(`Olá! Vi a ${l.nome} na ${SITE.nome}.`);
-  const local = [l.endereco, l.bairro, l.cidade && l.uf ? `${l.cidade} - ${l.uf}` : "", l.cep ? fmtCep(l.cep) : ""].filter(Boolean).join(", ");
-  abrirPainel(`
-    <div class="painel-cab">
-      <div class="painel-topo"><span class="cat-label">${esc(l.categoria || "Outros")}${l.cidade ? ` · ${esc(l.cidade)} – ${esc(l.uf)}` : ""}</span><button class="fechar" data-acao="fechar" aria-label="Fechar">×</button></div>
-      <div class="loja-cab">${logoHTML(l)}<div style="min-width:0"><h2>${esc(l.nome)}</h2><div class="selos" style="margin-top:8px">${seloHora(l)}</div></div></div>
-      ${l.descricao ? `<p style="margin:0;color:rgba(255,255,255,.85)">${esc(l.descricao)}</p>` : ""}
-      <div class="acoes-rapidas">
-        ${z ? `<a class="btn btn-amber" target="_blank" rel="noopener" href="https://wa.me/${z}?text=${msg}">WhatsApp</a>` : ""}
-        ${ig ? `<a class="btn btn-ghost" target="_blank" rel="noopener" href="https://instagram.com/${encodeURIComponent(ig)}">Instagram</a>` : ""}
-        ${local ? `<a class="btn btn-ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(local)}">Como chegar</a>` : ""}
-      </div>
-    </div>
-    <div class="painel-corpo">
-      ${(l.produtos || []).length ? `<div class="bloco"><h3>Produtos</h3><div class="prods">${l.produtos.map(p => `
-        <div class="prod"><div class="foto">sem foto${p.foto ? `<img data-midia="${esc(p.foto)}" alt="" loading="lazy">` : ""}</div><b>${esc(p.nome)}</b>${p.preco !== "" && p.preco != null ? `<span class="preco">${brl(p.preco)}</span>` : ""}</div>`).join("")}</div></div>` : ""}
-      ${cat.length || l.catalogoLink ? `<div class="bloco"><h3>Catálogo online</h3>
-        ${l.catalogoLink ? `<a class="pdf" target="_blank" rel="noopener" href="${esc(l.catalogoLink)}"><span>LINK</span>Abrir catálogo completo</a>` : ""}
-        ${cat.filter(c => c.tipo === "pdf").map(c => `<button class="pdf" data-pdf="${esc(c.id)}"><span>PDF</span>${esc(c.nome || "Catálogo")}</button>`).join("")}
-        ${cat.some(c => c.tipo === "img") ? `<div class="paginas">${cat.filter(c => c.tipo === "img").map(c => `<img data-midia="${esc(c.id)}" alt="Página do catálogo" loading="lazy">`).join("")}</div>` : ""}
-      </div>` : ""}
-      <div class="bloco"><h3>Contato e endereço</h3>
-        ${z ? `<div class="contato"><div><div class="rot">WhatsApp</div><span class="mono sel">${esc(fmtTel(l.whatsapp))}</span></div><button class="btn btn-sm" data-copiar="${esc(fmtTel(l.whatsapp))}">Copiar</button></div>` : ""}
-        ${ig ? `<div class="contato"><div><div class="rot">Instagram</div><span class="mono sel">@${esc(ig)}</span></div></div>` : ""}
-        ${local ? `<div class="contato"><div><div class="rot">Endereço</div>${esc(local)}</div></div>` : ""}
-        ${h.abre ? `<div class="contato"><div><div class="rot">Horário</div>${(h.dias || []).map(d => DIAS[d]).join(", ") || "—"} · <span class="mono">${esc(h.abre)}–${esc(h.fecha)}</span></div></div>` : ""}
-        ${!z && !ig && !local && !h.abre ? `<span class="rot">Sem contato cadastrado.</span>` : ""}
-      </div>
-    </div>`);
+  abrirPainel(detalheHTML(l, { fechar: true }));
   if (location.hash !== "#loja-" + id) history.replaceState(null, "", "#loja-" + id);
 }
 function abrirDoHash() { const m = location.hash.match(/^#loja-([A-Za-z0-9_-]+)$/); if (m) mostrarLoja(m[1]); }

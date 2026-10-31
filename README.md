@@ -75,3 +75,23 @@ Os arquivos usam módulos JavaScript, então não funcionam abrindo o `index.htm
 ## Limites do plano grátis
 
 O plano Spark permite 1 GB no banco e 50 mil leituras por dia. O site lê todas as lojas uma vez por visita, então atende bem algumas centenas de lojas e milhares de visitas por dia. Se crescer muito, dá para trocar a leitura para buscar só as lojas da cidade.
+
+---
+
+## Planos pagos para as lojas
+
+A Vitrine tem três planos, configurados em `js/config.js` (lista `PLANOS`). Você pode mudar nomes, preços e vantagens.
+
+| Plano | Preço sugerido | O que libera |
+|---|---|---|
+| Básico | grátis | contato, endereço, horário e até 3 produtos |
+| Destaque | R$ 29,90/mês | aparece antes das outras, selo, até 15 produtos, catálogo online |
+| Premium | R$ 49,90/mês | aparece primeiro, até 60 produtos, catálogo e página própria (`loja.html?id=...`) |
+
+**Como funciona no painel**
+- No cadastro da loja, escolha o **Plano** e a data **Pago até**. Os botões **+30 dias** e **+1 ano** calculam a data.
+- Quando a data passa, a loja volta sozinha para o Básico no site, sem apagar nada. Ao renovar, tudo volta a aparecer.
+- No topo do painel aparece a **receita mensal** dos planos ativos e a lista **Para cobrar**: lojas vencidas ou vencendo em até 7 dias, com o botão **Cobrar** (abre o WhatsApp do lojista com a mensagem pronta) e **+30 dias** para registrar o pagamento.
+- Para a chave Pix aparecer na mensagem de cobrança, preencha `pix` em `js/config.js`.
+
+**Página de planos**: `planos.html` mostra os planos para os lojistas, com botão de WhatsApp para cada um. O site principal tem um botão **Ver planos** na seção "Sua loja aqui".

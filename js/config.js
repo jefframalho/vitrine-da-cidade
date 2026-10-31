@@ -17,5 +17,25 @@ export const firebaseConfig = {
 export const SITE = {
   nome: "Vitrine da Cidade",
   // Seu WhatsApp com DDD, só números (aparece em "Sua loja aqui")
-  whatsappContato: "83921418988"
+  whatsappContato: "83921418988",
+  // Sua chave Pix, para aparecer na mensagem de cobrança (deixe "" para não mostrar)
+  pix: ""
 };
+
+// =====================================================================
+// PLANOS PARA AS LOJAS
+// Ajuste nomes, preços e vantagens como quiser. O "id" não deve mudar
+// depois que houver lojas cadastradas.
+//   maxProdutos: quantos produtos aparecem no site
+//   catalogo:    mostra o catálogo online (fotos, PDF, link)
+//   destaque:    aparece antes das outras lojas, com selo
+//   pagina:      ganha uma página própria para divulgar (loja.html)
+// =====================================================================
+export const PLANOS = [
+  { id: "basico",   nome: "Básico",   preco: 0,     maxProdutos: 3,  catalogo: false, destaque: false, pagina: false,
+    vantagens: ["Contato, Instagram e endereço", "Horário com aviso de aberto ou fechado", "Até 3 produtos com foto e preço"] },
+  { id: "destaque", nome: "Destaque", preco: 29.90, maxProdutos: 15, catalogo: true,  destaque: true,  pagina: false,
+    vantagens: ["Tudo do Básico", "Aparece entre as primeiras da categoria", "Selo de Destaque", "Até 15 produtos", "Catálogo online"] },
+  { id: "premium",  nome: "Premium",  preco: 49.90, maxProdutos: 60, catalogo: true,  destaque: true,  pagina: true,
+    vantagens: ["Tudo do Destaque", "Aparece primeiro, à frente do Destaque", "Até 60 produtos", "Página própria da loja para divulgar no Instagram e WhatsApp"] }
+];
