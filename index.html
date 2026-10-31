@@ -50,6 +50,15 @@
 <div id="overlay" class="fundo" hidden></div>
 <div id="toast" class="toast" hidden></div>
 
+<script>
+(function(){
+  function mostrar(t){var a=document.getElementById('aviso');if(a){a.hidden=false;a.textContent=t;}var c=document.getElementById('carregando');if(c)c.hidden=true;}
+  if(location.protocol==='file:'){mostrar('Abra pelo endereço do site (https://jefframalho.github.io/vitrine-da-cidade/). Aberto direto do arquivo no computador, ele não funciona.');return;}
+  window.addEventListener('error',function(e){if(window.__ok)return;var t=e.target;var arq=(t&&t.src)||e.filename||'';mostrar('Erro ao carregar: '+(e.message||'um arquivo não carregou')+(arq?' ('+arq.split('/').pop()+')':'')+'. Mande uma captura desta tela.');},true);
+  window.addEventListener('unhandledrejection',function(e){var r=e.reason||{};mostrar('Erro: '+(r.code||r.message||r)+'. Mande uma captura desta tela.');});
+  setTimeout(function(){if(!window.__ok)mostrar('A página não iniciou. Recarregue (no computador, Ctrl+Shift+R). Se continuar, mande uma captura desta tela e diga qual navegador está usando.');},9000);
+})();
+</script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

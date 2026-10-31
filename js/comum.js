@@ -18,7 +18,7 @@ export const $ = s => document.querySelector(s);
 export const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 export const digitos = s => String(s || "").replace(/\D/g, "");
 export const fmtCep = c => { const d = digitos(c).slice(0, 8); return d.length > 5 ? d.slice(0, 5) + "-" + d.slice(5) : d; };
-export const semAcento = s => String(s || "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").trim();
+export const semAcento = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 export const chaveCidade = (cidade, uf) => semAcento(cidade).replace(/\s+/g, "-") + "_" + String(uf || "").toUpperCase();
 export const iniciais = n => (n || "?").trim().split(/\s+/).slice(0, 2).map(p => p[0]).join("").toUpperCase();
 export const brl = n => (n === "" || n == null || isNaN(n)) ? "" : Number(n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

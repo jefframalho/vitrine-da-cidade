@@ -2,6 +2,7 @@
 import { configurado, SITE, CATS, DIAS, $, esc, digitos, fmtCep, semAcento, chaveCidade, iniciais, brl, zap, fmtTel, insta, aberto, toast,
   consultarCep, carregarLojas, preencherMidias, abrirPdf } from "./comum.js";
 
+window.__ok = true;
 const S = { lojas: [], carregou: false, cidade: null, cep: "", msg: "", buscando: false, cat: "Todas", q: "", aberta: null };
 const guardar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 const ler = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };

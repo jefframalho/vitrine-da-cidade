@@ -7,8 +7,9 @@ import { configurado, db, auth, CATS, DIAS, UFS, $, esc, digitos, fmtCep, chaveC
 let lojas = [];
 let F = null; // formulário aberto: { id, d, novas:[], removidas:[] }
 
-const telas = n => ["tela-login", "tela-lista", "tela-form"].forEach(t => $("#" + t).hidden = t !== n);
-const aviso = t => { const a = $("#aviso"); a.hidden = !t; a.textContent = t || ""; };
+window.__ok = true;
+const telas = n => { $("#carregando").hidden = true; ["tela-login", "tela-lista", "tela-form"].forEach(t => $("#" + t).hidden = t !== n); };
+const aviso = t => { const a = $("#aviso"); a.hidden = !t; a.textContent = t || ""; if (t) $("#carregando").hidden = true; };
 
 if (!configurado) {
   aviso("Site ainda não configurado: cole o firebaseConfig em js/config.js (veja o README).");
@@ -16,7 +17,7 @@ if (!configurado) {
   onAuthStateChanged(auth, u => {
     $("#sair").hidden = !u; $("#quem").textContent = u ? u.email : "";
     if (u) carregarLista(); else telas("tela-login");
-  });
+  }, err => { aviso("Erro no login do Firebase: " + (err.code || err.message)); telas("tela-login"); });
 }
 
 // ---------- Login ----------
